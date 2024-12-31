@@ -1,0 +1,362 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMG2PDF</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #000000;
+            color: #ffffff;
+            padding: 10px 20px;
+        }
+        .header .menu-icon, .header .pdf-icon {
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .header .title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .nav-menu {
+            display: none;
+            flex-direction: column;
+            background-color: #000000;
+            position: absolute;
+            top: 50px;
+            left: 0;
+            width: 100%;
+            z-index: 1;
+        }
+        .nav-menu a {
+            color: #ffffff;
+            padding: 10px 20px;
+            text-decoration: none;
+        }
+        .nav-menu a:hover {
+            background-color: #333333;
+        }
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: calc(100% - 50px);
+            text-align: center;
+        }
+        .content .icon {
+            font-size: 48px;
+            color: #cccccc;
+        }
+        .content .text {
+            font-size: 18px;
+            color: #cccccc;
+            margin-top: 10px;
+        }
+        .content .item {
+            display: flex;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .content .item img {
+            width: 48px;
+            height: 48px;
+            margin-right: 10px;
+        }
+        .content .item .text {
+            font-size: 18px;
+            color: #cccccc;
+        }
+        .fab-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background-color: #000000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 24px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+        }
+        #fileInput {
+            display: none;
+        }
+        .pdf-list {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background-color: #ffffff;
+            border: 1px solid #cccccc;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+        }
+        .pdf-list a {
+            padding: 10px;
+            text-decoration: none;
+            color: #000000;
+            width: 100%;
+            text-align: center;
+        }
+        .pdf-list a:hover {
+            background-color: #f0f0f0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 3;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+        .modal-content button {
+            padding: 10px 20px;
+            background-color: #000000;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+        }
+        .modal-content button:hover {
+            background-color: #333333;
+        }
+        @media (max-width: 600px) {
+            .header .title {
+                font-size: 16px;
+            }
+            .content .icon {
+                font-size: 36px;
+            }
+            .content .text {
+                font-size: 16px;
+            }
+            .fab-button {
+                width: 48px;
+                height: 48px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <i class="fas fa-bars menu-icon" onclick="toggleMenu()"></i>
+        <div class="title">IMG2PDF</div>
+        <i class="fas fa-file-pdf pdf-icon" onclick="togglePdfList()"></i>
+    </div>
+    <div class="nav-menu" id="navMenu">
+        <a href="#" onclick="navigateTo('home')">Home</a>
+        <a href="#" onclick="navigateTo('addImages')">Add Images</a>
+        <a href="#" onclick="navigateTo('showPdfFiles')">Show PDF Files</a>
+        <a href="#" onclick="navigateTo('settings')">Settings</a>
+    </div>
+    <div class="pdf-list" id="pdfList">
+        <!-- PDF links will be added here dynamically -->
+    </div>
+    <div class="content" id="content">
+        <div class="item">
+            <i class="fas fa-plus-circle icon"></i>
+            <div class="text">Add Images</div>
+        </div>
+        <div class="item" onclick="togglePdfList()">
+            <i class="fas fa-file-pdf icon"></i>
+            <div class="text">Show PDF Files</div>
+        </div>
+    </div>
+    <div class="fab-button" onclick="document.getElementById('fileInput').click()">
+        <i class="fas fa-plus"></i>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFileUpload(event)">
+    <div class="modal" id="pdfNameModal">
+        <div class="modal-content">
+            <h2>Enter PDF Name</h2>
+            <input type="text" id="pdfNameInput" placeholder="Enter PDF name">
+            <button onclick="savePdf()">Save</button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script>
+        let pdfFiles = [];
+        let currentPdfBlob = null;
+
+        function toggleMenu() {
+            var menu = document.getElementById('navMenu');
+            if (menu.style.display === 'flex') {
+                menu.style.display = 'none';
+            } else {
+                menu.style.display = 'flex';
+            }
+        }
+
+        function togglePdfList() {
+            var pdfList = document.getElementById('pdfList');
+            if (pdfList.style.display === 'flex') {
+                pdfList.style.display = 'none';
+            } else {
+                pdfList.style.display = 'flex';
+            }
+        }
+
+        async function handleFileUpload(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const imgData = await readFileAsDataURL(file);
+                    const img = new Image();
+                    img.src = imgData;
+                    await new Promise((resolve) => {
+                        img.onload = () => {
+                            const imgWidth = pdf.internal.pageSize.getWidth();
+                            const imgHeight = (img.height * imgWidth) / img.width;
+                            if (i > 0) {
+                                pdf.addPage();
+                            }
+                            pdf.addImage(img, 'JPEG', 0, 0, imgWidth, imgHeight);
+                            resolve();
+                        };
+                    });
+                }
+
+                currentPdfBlob = pdf.output('blob');
+                document.getElementById('pdfNameModal').style.display = 'flex';
+            }
+        }
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function savePdf() {
+            const pdfName = document.getElementById('pdfNameInput').value || `images_${new Date().getTime()}.pdf`;
+            const pdfUrl = URL.createObjectURL(currentPdfBlob);
+            pdfFiles.push({ name: pdfName, url: pdfUrl });
+            updatePdfList();
+            document.getElementById('pdfNameModal').style.display = 'none';
+            saveToFileSystem(currentPdfBlob, pdfName);
+        }
+
+        function updatePdfList() {
+            const pdfList = document.getElementById('pdfList');
+            pdfList.innerHTML = '';
+            pdfFiles.forEach(file => {
+                const link = document.createElement('a');
+                link.href = file.url;
+                link.textContent = file.name;
+                link.target = '_blank';
+                pdfList.appendChild(link);
+            });
+        }
+
+        async function saveToFileSystem(blob, fileName) {
+            try {
+                const handle = await window.showDirectoryPicker();
+                const fileHandle = await handle.getFileHandle(fileName, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                alert('File saved successfully!');
+            } catch (error) {
+                console.error('Error saving file:', error);
+                alert('Failed to save file.');
+            }
+        }
+
+        function navigateTo(page) {
+            const content = document.getElementById('content');
+            content.innerHTML = '';
+
+            if (page === 'home') {
+                content.innerHTML = `
+                    <div class="item">
+                        <i class="fas fa-plus-circle icon"></i>
+                        <div class="text">Add Images</div>
+                    </div>
+                    <div class="item" onclick="togglePdfList()">
+                        <i class="fas fa-file-pdf icon"></i>
+                        <div class="text">Show PDF Files</div>
+                    </div>
+                `;
+            } else if (page === 'addImages') {
+                content.innerHTML = `
+                    <div class="item">
+                        <i class="fas fa-plus-circle icon"></i>
+                        <div class="text">Add Images</div>
+                    </div>
+                `;
+            } else if (page === 'showPdfFiles') {
+                content.innerHTML = `
+                    <div class="item" onclick="togglePdfList()">
+                        <i class="fas fa-file-pdf icon"></i>
+                        <div class="text">Show PDF Files</div>
+                    </div>
+                `;
+            } else if (page === 'settings') {
+                content.innerHTML = `
+                    <div class="item">
+                        <i class="fas fa-cog icon"></i>
+                        <div class="text">Settings</div>
+                    </div>
+                `;
+            }
+
+            toggleMenu();
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js').then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
